@@ -1,0 +1,10 @@
+const fs=require('node:fs'),path=require('node:path'),{spawnSync}=require('node:child_process');
+const root=path.resolve(__dirname,'..'),stage=path.join(root,'.desktop-app');
+fs.mkdirSync(stage,{recursive:true});
+for(const name of ['electron','agent'])fs.cpSync(path.join(root,name),path.join(stage,name),{recursive:true,filter:p=>!p.endsWith('session-test.cjs')});
+fs.copyFileSync(path.join(root,'print-agent.js'),path.join(stage,'print-agent.js'));
+const pkg=JSON.parse(fs.readFileSync(path.join(root,'package.json')));
+fs.writeFileSync(path.join(stage,'package.json'),JSON.stringify({name:'xeroo-desk',version:pkg.version,private:true,description:pkg.description,author:pkg.author,main:pkg.main,dependencies:{'pdf-lib':'npm:@cantoo/pdf-lib@2.11.1'}},null,2));
+if(!process.env.npm_execpath)throw Error('Run via npm run electron:prepare');
+const r=spawnSync(process.execPath,[process.env.npm_execpath,'install','--prefix',stage,'--omit=dev','--ignore-scripts','--no-audit','--no-fund'],{stdio:'inherit',windowsHide:true});
+if(r.status!==0)process.exitCode=r.status||1;

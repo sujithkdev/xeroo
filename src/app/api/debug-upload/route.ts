@@ -1,0 +1,1 @@
+import {NextResponse} from 'next/server';import {isLocalOperator} from '@/lib/access';export async function GET(request:Request){return isLocalOperator(request)?NextResponse.json({storage:'private-local',supportedFormats:['pdf']}):NextResponse.json({error:'Unauthorized'},{status:401});}

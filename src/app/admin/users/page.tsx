@@ -1,0 +1,2 @@
+import Link from 'next/link';
+export default function Page(){return <main className="p-8 max-w-3xl mx-auto"><h1 className="page-heading">User management</h1><p className="my-6 text-slate-600">The platform user directory and role editing are not connected yet. Create a shop to invite its owner using a secure invitation link.</p><Link className="btn-primary" href="/admin/shops/new">Add a shop</Link></main>;}

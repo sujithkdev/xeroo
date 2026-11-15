@@ -1,0 +1,35 @@
+const fs=require('fs'),path=require('path'),crypto=require('crypto'),assert=require('node:assert/strict'),ts=require('typescript');
+process.env.DATA_DIR=path.resolve('.test-data','launch-'+crypto.randomUUID());process.env.IMPORT_LEGACY_DB='false';
+require.extensions['.ts']=(m,f)=>m._compile(ts.transpileModule(fs.readFileSync(f,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,esModuleInterop:true}}).outputText,f);
+const {launchMetrics,mutateLaunch,enforceLaunch,gates}=require('../src/lib/launch.ts');const {db}=require('../src/lib/db.ts');const service=require('../src/lib/checkout-service.ts');const {storeDocument}=require('../src/lib/documents-local.ts');const {PDFDocument}=require('pdf-lib');
+let count=0;const check=(v,m)=>{assert.ok(v,m);count++;console.log('PASS',m);};
+async function main(){
+ const state={};mutateLaunch(state,{action:'enable'},'manager');assert.throws(()=>enforceLaunch(state,[],{source:'web'}));count++;
+ enforceLaunch(state,[],{source:'counter'});check(true,'staff-only stage accepts counter workflow');
+ assert.throws(()=>mutateLaunch(state,{action:'advance'},'manager'));count++;
+ for(const key of gates[0])mutateLaunch(state,{action:'gate',key,evidence:'Synthetic test passed with staff on test bench.'},'manager');
+ mutateLaunch(state,{action:'advance'},'manager');assert.throws(()=>enforceLaunch(state,[],{source:'web',customerPhone:'9876543210'}));count++;
+ mutateLaunch(state,{action:'settings',phones:'9876543210',dailyLimit:2},'manager');enforceLaunch(state,[],{source:'web',customerPhone:'9876543210'});check(true,'invited customer may place during invited stage');
+ mutateLaunch(state,{action:'issue',title:'Lost acknowledgement repeats',severity:'critical'},'manager');for(const key of gates[1])mutateLaunch(state,{action:'gate',key,evidence:'Operational check completed by pilot manager.'},'manager');assert.throws(()=>mutateLaunch(state,{action:'advance'},'manager'));count++;
+ mutateLaunch(state,{action:'resolve',id:state.issues[0].id,evidence:'Fixed journal handling and passed restart retest.'},'manager');mutateLaunch(state,{action:'advance'},'manager');check(state.stage===2,'resolved issue plus evidence permits controlled advancement');
+ mutateLaunch(state,{action:'pause'},'manager');assert.throws(()=>enforceLaunch(state,[],{source:'counter'}));count++;
+ const {staffFulfilment}=require('../src/lib/fulfilment.ts');const paymentOrder={id:'review',isPaid:true,amountPaise:200,status:'cancelled',paymentReviewRequired:true};
+ assert.throws(()=>staffFulfilment(paymentOrder,{action:'reconcile_payment',note:'too short'},'manager'));count++;
+ staffFulfilment(paymentOrder,{action:'reconcile_payment',verified:true,note:'Provider receipt checked; mismatch was a duplicate staff report.'},'manager');
+ check(!paymentOrder.paymentReviewRequired&&paymentOrder.paymentReviewResolvedAt&&paymentOrder.isPaid&&paymentOrder.amountPaise===200,'reconciliation closes review without altering money');
+ const now=Date.now(),createdAt=new Date(now-10000).toISOString();
+ const metrics=launchMetrics([{createdAt,status:'collected',confirmedPickupAt:new Date(now).toISOString(),inspectedAt:new Date(now-1000).toISOString(),fulfilmentEvents:[{action:'print_error'},{action:'staff_recovery',resolution:'retry_selected'},{action:'handling_logged',minutes:4},{action:'payment_mismatch'}]},{createdAt,status:'ready'},{createdAt,status:'queued',confirmedPickupAt:new Date(now-5000).toISOString()},{createdAt,synthetic:true,status:'failed'}],now);
+ check(metrics.total===3&&metrics.failures===1&&metrics.reprints===1&&metrics.paymentMismatches===1,'metrics retain recovered failures and exclude marked synthetic fixtures');check(metrics.handlingMinutes===4&&metrics.handlingSamples===1&&metrics.onTimeRate===1&&metrics.unknownReadiness===1&&metrics.overdueOpen===1,'metrics separate recorded samples, unknown readiness and overdue work');
+ check(launchMetrics([]).onTimeRate===null&&launchMetrics([]).handlingMinutes===null,'missing data never appears as success');
+ await db.saveRules({...await db.getRules(),workingHoursStart:'00:00',workingHoursEnd:'23:59',slotCapacity:3,slotPageCapacity:500});
+ const pdf=await PDFDocument.create();pdf.addPage();const doc=await storeDocument(await pdf.save(),'synthetic-pilot.pdf',50,100);
+ const qs=[];for(let i=0;i<12;i++)qs.push(await service.createQuote(null,{docs:[{fileUrl:doc.fileUrl,copies:1,paperSize:'A4',colorMode:'bw',duplex:'simplex'}]}));
+ const slots=(await service.pickupSlots(null,qs[0].id)).slots;
+ const rush=await Promise.allSettled(qs.map(q=>service.reservePickup(null,q.id,slots[0])));check(rush.filter(r=>r.status==='fulfilled').length===3,'busy-period burst of 12 reservations cannot overbook three-job slot');
+ await db.checkoutTransaction(async s=>{mutateLaunch(s.launch,{action:'enable'},'test');mutateLaunch(s.launch,{action:'settings',phones:'',dailyLimit:2},'test');});
+ const winners=qs.filter((_,i)=>rush[i].status==='fulfilled');const placed=await Promise.allSettled(winners.map(q=>service.placeCheckout(null,{quoteId:q.id,paymentMethod:'cash',customerPhone:'9876543210',source:'counter'})));
+ check(placed.filter(r=>r.status==='fulfilled').length===2,'concurrent walk-ins cannot exceed rolling pilot cap');
+ await db.checkoutTransaction(async s=>{mutateLaunch(s.launch,{action:'pause'},'test');});const first=placed.find(r=>r.status==='fulfilled').value;const retry=await service.placeCheckout(null,{quoteId:first.quoteId});check(retry.id===first.id,'pause retains idempotent access to already placed orders');
+ console.log(count+' launch checks passed; synthetic documents stayed in isolated test data.');
+}
+main().catch(e=>{console.error(e);process.exitCode=1;}).finally(()=>globalThis.printDatabase?.close());

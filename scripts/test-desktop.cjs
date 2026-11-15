@@ -1,0 +1,11 @@
+const assert=require('node:assert/strict');
+const {shopOrigin}=require('../electron/connection.cjs');
+assert.equal(shopOrigin('krishna.techpickhub.shop'),'https://krishna.techpickhub.shop');
+for(const url of ['http://krishna.techpickhub.shop','https://admin.techpickhub.shop','https://krishna.techpickhub.shop.evil.test','https://krishna.techpickhub.shop:8000','https://user:password@krishna.techpickhub.shop','https://krishna.techpickhub.shop/shop','https://127.0.0.1','file:///etc/passwd','javascript:alert(1)'])assert.throws(()=>shopOrigin(url));
+assert.equal(shopOrigin('http://alpha.print.localhost:3001',{development:true}),'http://alpha.print.localhost:3001');
+assert.throws(()=>shopOrigin('http://alpha.print.localhost:3001'));
+console.log('PASS desktop origin restrictions and development-only localhost');
+const {pilotOrigin}=require('../electron/connection.cjs');
+assert.equal(shopOrigin(pilotOrigin),pilotOrigin);
+for(const address of [pilotOrigin.replace('https:', 'http:'),pilotOrigin+'.example.org','https://another-shop.trycloudflare.com',pilotOrigin+'/shop/login',pilotOrigin+':8080'])assert.throws(()=>shopOrigin(address));
+console.log('PASS exact pilot HTTPS origin');

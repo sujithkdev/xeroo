@@ -1,0 +1,2 @@
+import Link from 'next/link';
+export default function Page(){return <main className="p-8 max-w-3xl mx-auto"><h1 className="page-heading">Account recovery unavailable</h1><p className="my-6 text-slate-600">Self-service password recovery is not connected. Contact your platform administrator for assistance. No recovery email has been sent.</p><Link className="btn-primary" href="/shop/login">Back to sign in</Link></main>;}

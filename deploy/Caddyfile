@@ -1,0 +1,22 @@
+{
+ on_demand_tls {
+  ask http://app:3000/api/tls-approved
+ }
+}
+
+https:// {
+ tls {
+  on_demand
+ }
+ @root host techpickhub.shop
+ redir @root https://admin.techpickhub.shop/admin/login 302
+ @internal path /api/tls-approved
+ respond @internal 404
+ header X-Content-Type-Options nosniff
+ header Referrer-Policy same-origin
+ header X-Frame-Options DENY
+ request_body {
+  max_size 55MB
+ }
+ reverse_proxy app:3000
+}

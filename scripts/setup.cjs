@@ -1,0 +1,13 @@
+const fs = require('fs');
+const crypto = require('crypto');
+const path = require('path');
+const envFile = path.join(__dirname, '..', '.env.local');
+if (Number(process.versions.node.split('.')[0]) < 22) throw new Error('Node.js 22.13 or newer is required.');
+let content = fs.existsSync(envFile) ? fs.readFileSync(envFile, 'utf8') : '';
+const defaults = { LOCAL_OPERATOR_MODE:'true', AGENT_TOKEN:crypto.randomBytes(32).toString('hex'), BACKEND_URL:'http://127.0.0.1:3000' };
+for (const [key,value] of Object.entries(defaults)) if (!new RegExp('^'+key+'=', 'm').test(content)) content += '\n'+key+'='+value+'\n';
+if (/^AGENT_TOKEN=\s*$/m.test(content)) content = content.replace(/^AGENT_TOKEN=\s*$/m, 'AGENT_TOKEN='+defaults.AGENT_TOKEN);
+if(process.env.SKIP_LOCAL_CONFIG!=='true')fs.writeFileSync(envFile,content,{mode:0o600});
+fs.mkdirSync(path.join(__dirname,'..','public','vendor'),{recursive:true});
+fs.copyFileSync(require.resolve('pdfjs-dist/build/pdf.worker.min.mjs'),path.join(__dirname,'..','public','vendor','pdf.worker.min.mjs'));
+console.log('Local configuration and PDF worker ready. Existing settings preserved.');

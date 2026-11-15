@@ -1,0 +1,154 @@
+{
+  "name": "krishna-print-hub",
+  "version": "0.2.0",
+  "description": "Xeroo Desk — connected print shop desktop application",
+  "author": "Krishna Print Hub",
+  "private": true,
+  "main": "electron/cloud-main.cjs",
+  "scripts": {
+    "dev": "next dev --hostname 127.0.0.1 --webpack",
+    "build": "next build --webpack",
+    "start": "next start --hostname 127.0.0.1",
+    "lint": "eslint src",
+    "typecheck": "tsc --noEmit",
+    "agent": "node --env-file-if-exists=.env.local print-agent.js",
+    "setup": "node scripts/setup.cjs",
+    "prebuild": "node scripts/setup.cjs",
+    "predev": "node scripts/setup.cjs",
+    "backup": "node --env-file-if-exists=.env.local scripts/backup.cjs",
+    "test": "node scripts/integration.cjs",
+    "shop": "node scripts/run-local.cjs",
+    "import-legacy": "node --env-file-if-exists=.env.local scripts/import-legacy.cjs",
+    "cleanup": "node --env-file-if-exists=.env.local scripts/cleanup-documents.cjs",
+    "db:setup": "node scripts/setup-postgres.cjs",
+    "db:migrate": "node --env-file=.env.multishop.local scripts/migrate.cjs",
+    "start:multishop": "node --env-file=.env.multishop.local node_modules/next/dist/bin/next start --hostname 127.0.0.1 --port 3001",
+    "test:multishop": "node --env-file=.env.multishop.local scripts/integration-multishop.cjs",
+    "test:checkout": "node scripts/integration-checkout.cjs",
+    "test:fulfilment": "node scripts/integration-fulfilment.cjs",
+    "test:launch": "node scripts/integration-launch.cjs",
+    "test:priority": "node scripts/test-priority.cjs",
+    "test:priority:multishop": "node --env-file=.env.multishop.local scripts/test-priority.cjs",
+    "electron:dev": "electron .",
+    "electron:build": "npm run electron:prepare && electron-builder --win --x64",
+    "electron:pack": "npm run electron:prepare && electron-builder --win --x64 --dir",
+    "test:scheduling": "node scripts/test-scheduling.cjs",
+    "test:desktop": "node scripts/test-desktop.cjs",
+    "start:hosted": "next start --hostname 0.0.0.0",
+    "db:migrate:hosted": "node scripts/migrate.cjs",
+    "admin:bootstrap": "node scripts/bootstrap-admin.cjs",
+    "electron:prepare": "node scripts/prepare-desktop.cjs",
+    "counter:build": "set XEROO_COUNTER_BUILD=1&& npm run build && npm run electron:prepare && node scripts/package-counter.cjs"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.1152.0",
+    "@aws-sdk/s3-request-presigner": "^3.1152.0",
+    "@types/bcryptjs": "^2.4.6",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/pg": "^8.23.1",
+    "bcryptjs": "^3.0.3",
+    "clsx": "^2.1.1",
+    "jsonwebtoken": "^9.0.3",
+    "jszip": "^3.10.1",
+    "lucide-react": "^0.395.0",
+    "next": "^16.4.2",
+    "pdf-lib": "npm:@cantoo/pdf-lib@^2.11.1",
+    "pdfjs-dist": "^6.2.108",
+    "pg": "^8.23.1",
+    "qrcode": "^1.5.4",
+    "razorpay": "^2.9.4",
+    "react": "^18",
+    "react-dom": "^18",
+    "react-dropzone": "^19.1.1",
+    "react-hot-toast": "^2.4.1",
+    "recharts": "^2.12.7",
+    "styled-jsx": "^5.1.7",
+    "tailwind-merge": "^2.3.0"
+  },
+  "devDependencies": {
+    "@electron/fuses": "^1.8.0",
+    "@types/node": "^20",
+    "@types/qrcode": "^1.5.6",
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
+    "autoprefixer": "^10.5.2",
+    "concurrently": "^9.1.2",
+    "electron": "^45.3.2",
+    "electron-builder": "^26.0.12",
+    "eslint": "^9.39.5",
+    "eslint-config-next": "^16.4.2",
+    "postcss": "^8",
+    "tailwindcss": "^3.4.1",
+    "typescript": "^5",
+    "wait-on": "^8.0.1"
+  },
+  "engines": {
+    "node": ">=22.13.0"
+  },
+  "build": {
+    "appId": "shop.techpickhub.xeroo",
+    "productName": "Xeroo Desk",
+    "asar": true,
+    "directories": {
+      "output": "dist-electron",
+      "app": ".desktop-app"
+    },
+    "files": [
+      "electron/**/*",
+      "print-agent.js",
+      "agent/**/*",
+      "package.json",
+      "!**/.env*",
+      "!data/**/*",
+      "!aa/**/*",
+      "!electron/session-test.cjs"
+    ],
+    "extraResources": [
+      {
+        "from": "SumatraPDF.exe",
+        "to": "SumatraPDF.exe"
+      }
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "signAndEditExecutable": true,
+      "icon": "electron/xeroo-desk.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "artifactName": "XerooDesk-Setup-${version}.${ext}",
+      "uninstallerIcon": "electron/xeroo-desk.ico",
+      "installerIcon": "electron/xeroo-desk.ico"
+    },
+    "portable": {
+      "artifactName": "XerooDesk-Portable-${version}.${ext}"
+    },
+    "asarUnpack": [
+      "print-agent.js",
+      "agent/**/*",
+      "electron/smoke-agent.cjs",
+      "node_modules/**/*"
+    ]
+  },
+  "allowScripts": {
+    "electron@33.3.1": true,
+    "unrs-resolver@1.12.2": true,
+    "electron-winstaller@5.4.0": true
+  }
+}

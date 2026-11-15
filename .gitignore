@@ -1,0 +1,61 @@
+node_modules/
+.next/
+.env.local
+.env*.local
+.env
+*.log
+.DS_Store
+out/
+dist/
+
+.vercel
+.wwebjs_auth/
+.wwebjs_cache/
+
+# Windows system files
+desktop.ini
+
+# Build artifacts
+*.class
+manifest.txt
+default_config.properties
+!public/downloads/KrishnaPrintAgent.jar
+
+.vercel
+.env*
+!.env.example
+
+db.json
+public/uploads/
+SumatraPDF-settings.txt
+*.pdf
+*.docx
+*.zip
+*.db
+
+.build/
+data/
+*.sqlite*
+
+backups/
+.test-data/
+public/vendor/
+lint-results.txt
+*.tsbuildinfo
+
+# Electron build output
+dist-electron/
+
+# Binary executables (large — distributed separately)
+KrishnaPrintAgent.jar
+KrishnaPrintAgentSetup.exe
+
+# PNG/ICO generated assets (regenerated at build time)
+electron/tray-icon.png
+electron/tray-icon.ico
+
+.desktop-app/
+
+.counter-build/
+.counter-stage/
+dist-counter/
