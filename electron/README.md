@@ -1,47 +1,10 @@
-# Krishna Print Hub — Electron Desktop App
+# Xeroo Desk
 
-## Running in development
+The connected desktop application starts at `electron/cloud-main.cjs`.
+Run `npm run electron:dev` to open it, and `npm run electron:build` to generate Setup and Portable executables in `dist-electron/`.
+The connected edition uses the hosted website; it does not start a local Next.js server.
+Connection handling lives in `connection.cjs` and `connect-preload.cjs`; printing uses the root `print-agent.js`, `agent/`, and `SumatraPDF.exe`.
 
-```bat
-npm run electron:dev
-```
+The optional offline counter edition starts at `counter-main.cjs`. Build it with `npm run counter:build`; output goes to `dist-counter/`.
 
-This starts the Next.js dev server and Electron simultaneously.
-The tray icon appears once the server is ready (~30s first run).
-
-## Building the installer (.exe)
-
-```bat
-npm run build           # Build Next.js production bundle first
-npm run electron:build  # Package into dist-electron/Krishna Print Hub Setup.exe
-```
-
-The output installer is in `dist-electron/`.
-
-## Configuration
-
-Set these environment variables before running (or in a `.env.local` file):
-
-| Variable | Required | Description |
-|---|---|---|
-| `AGENT_TOKEN` | Yes (for printing) | 64-char hex token — run `npm run setup` to generate |
-| `PORT` | No | Web server port, default `3000` |
-| `DATA_DIR` | No | Where SQLite DB is stored, default `%APPDATA%\Krishna Print Hub\data` |
-
-## Architecture
-
-```
-KrishnaPrintHub.exe (Electron)
-  ├── electron/main.js     ← Electron main process
-  ├── Next.js server       ← Spawned as child process on port 3000
-  │     └── .build/        ← Compiled Next.js app
-  └── Print agent          ← Forked as child process, polls for jobs
-        └── print-agent.js
-```
-
-## Logs
-
-Logs are written to:
-`%APPDATA%\Krishna Print Hub\logs\krishna-hub.log`
-
-Right-click the tray icon → "View Logs" to open the log file location.
+Retired Java and tray-only Electron implementations were moved to `backups/cleanup-2026-11-18/`. Current pilot installers remain in `dist-electron/`. Shop data, temporary hosting, owner/admin features, and environment configuration were preserved.

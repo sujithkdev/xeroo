@@ -3,7 +3,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('n
 require.extensions['.ts']=(m,f)=>m._compile(ts.transpileModule(fs.readFileSync(f,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,esModuleInterop:true}}).outputText,f);
 const Module=require('node:module'),resolve=Module._resolveFilename;
 Module._resolveFilename=function(id,...args){return resolve.call(this,id.startsWith('@/')?path.resolve('src',id.slice(2)):id,...args);};
-const {eligibleDocument}=require('./document-retention.cjs');
+const {eligibleDocument}=require('../scripts/document-retention.cjs');
 const {boundedBody,limitExpensiveRequest}=require('../src/lib/request-limits.ts');
 const now=Date.now(),old=new Date(now-60*86400000).toISOString();
 const meta={id:crypto.randomUUID(),createdAt:old};
@@ -33,7 +33,7 @@ async function postgres(){
  process.env.LOCAL_DB_MODE='false';process.env.STORAGE_BUCKET='';process.env.DATA_DIR=fs.mkdtempSync(path.join(os.tmpdir(),'print-priority-'));
  const {query,queryOne}=require('../src/lib/db/client.ts');
  try{
-  await require('./migrate.cjs').migrate(process.env.DATABASE_URL);
+  await require('../scripts/migrate.cjs').migrate(process.env.DATABASE_URL);
   const shop=crypto.randomUUID();await query("INSERT INTO shops(id,name,subdomain,status) VALUES($1,'Priority test','priority','active')",[shop]);
   const shops=require('../src/lib/db/shops.ts');
   await shops.upsertShopSettings(shop,{retention_days:14,enable_cash:true,accepting_orders:true});

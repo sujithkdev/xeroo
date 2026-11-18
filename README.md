@@ -1,5 +1,9 @@
 # Krishna Print Hub
 
+Project navigation: [Structure](docs/STRUCTURE.md) · [Contributing](CONTRIBUTING.md) · [Desktop](electron/README.md) · [Deployment](deploy/README.md)
+
+Automated test runners live in `tests/`; operational scripts live in `scripts/`. Run npm commands from the repository root.
+
 A complete print shop management system — customer ordering website, staff dashboard, and automatic print agent — all in one.
 
 ## What it does

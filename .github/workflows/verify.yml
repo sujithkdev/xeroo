@@ -30,7 +30,7 @@ jobs:
       - run: npm run test:fulfilment
       - run: npm run test:launch
       - run: npm test
-      - run: node scripts/integration-multishop.cjs
+      - run: node tests/integration-multishop.cjs
         env:
           DATABASE_URL: postgresql://xeroo_test:isolated_ci_only@127.0.0.1:5432/xeroo_test
       - run: npm audit --omit=dev
